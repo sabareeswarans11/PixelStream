@@ -1,0 +1,67 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv *)",
+      "Bash(/Users/sabareeswarans/pinokio/new/bin/miniconda/bin/uv *)",
+      "Bash(docker *)",
+      "Bash(docker-compose *)",
+      "Bash(pytest *)",
+      "Bash(ruff *)",
+      "Bash(mypy *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(node *)",
+      "Bash(git *)",
+      "Bash(gh *)",
+      "Bash(find *)",
+      "Bash(ls *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(bash scripts/*)",
+      "Bash(sh scripts/*)",
+      "Bash(jq *)",
+      "Bash(wscat *)",
+      "Read(**)",
+      "Edit(**)",
+      "Write(**)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // \"\"' | { read -r f; echo \"$f\" | grep -qE '\\.py$' && cd /Users/sabareeswarans/Projects_26/PixelStream && /Users/sabareeswarans/pinokio/new/bin/miniconda/bin/uv run ruff check --fix \"$f\" && /Users/sabareeswarans/pinokio/new/bin/miniconda/bin/uv run ruff format \"$f\"; } 2>/dev/null || true",
+            "timeout": 30,
+            "statusMessage": "Ruff: lint + format..."
+          },
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // \"\"' | { read -r f; echo \"$f\" | grep -qE '\\.py$' && cd /Users/sabareeswarans/Projects_26/PixelStream && /Users/sabareeswarans/pinokio/new/bin/miniconda/bin/uv run mypy \"$f\" --ignore-missing-imports 2>&1 | tail -5; } || true",
+            "timeout": 60,
+            "async": true,
+            "statusMessage": "mypy: type check..."
+          },
+          {
+            "type": "agent",
+            "prompt": "You are the qa-engineer agent for PixelStream (see .claude/agents/qa-engineer.md). A Python file was just edited. The hook input is available in your context. Extract the file path from the tool_input, read the file, and run your QA checklist: correctness, pipeline-specific checks, missing tests. Output a compact QA CHECK report. If no issues, say '✓ No issues found'. Be terse — max 10 lines.",
+            "timeout": 90,
+            "async": true,
+            "statusMessage": "QA Engineer reviewing..."
+          },
+          {
+            "type": "agent",
+            "prompt": "You are the data-engineer agent for PixelStream (see .claude/agents/data-engineer.md). A file was just edited. The hook input has the file path. ONLY act if the file path contains one of: batch_handler, delta_writer, schemas, frame_producer. Read the file and run your data contract checklist: schema compatibility, Kafka message integrity, Delta write safety, data invariants. Output a compact DATA ENGINEER CHECK report. If the file is not a data-layer file, output nothing and exit immediately.",
+            "timeout": 90,
+            "async": true,
+            "statusMessage": "Data Engineer checking..."
+          }
+        ]
+      }
+    ]
+  }
+}

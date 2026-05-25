@@ -1,0 +1,47 @@
+# Environment
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+.uv/
+*.egg-info/
+dist/
+build/
+
+# uv
+uv.lock.bak
+
+# Spark
+metastore_db/
+derby.log
+spark-warehouse/
+/tmp/
+
+# Delta Lake
+data/detections/
+data/*.mp4
+
+# Node / React
+node_modules/
+dashboard/dist/
+dashboard/.vite/
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Model weights cache (auto-downloaded by ultralytics)
+# ~/.cache/ultralytics/  ← user-level, not in repo
+
+# Logs
+*.log
+logs/
