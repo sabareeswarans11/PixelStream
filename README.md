@@ -8,12 +8,9 @@
 
 ## Demo
 
-<!-- Replace with your screen recording once captured -->
-> 📹 **`pixelstream_demo.gif`** — drop your screen recording here
->
-> Suggested: record `http://localhost:5173` with auto-detect ON, switch between models, then switch to the live webcam stream.
+![PixelStream demo — auto-detect, live bounding boxes, charts updating in real time](docs/pixelstream_demo.gif)
 
-![Demo placeholder](https://placehold.co/900x500/1a1a2e/7c3aed?text=PixelStream+Demo)
+▶️ [Watch full recording (MP4, 54s)](docs/pixelstream_demo.mp4)
 
 ---
 
