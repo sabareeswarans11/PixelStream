@@ -4,6 +4,9 @@ import pathlib
 import time
 from typing import Any
 
+import cv2
+import numpy as np
+
 import structlog
 from confluent_kafka import Producer
 from pyspark.sql import DataFrame
@@ -69,7 +72,24 @@ class BatchHandler:
             model=self._backend.model_name,
             latency_ms=latency_ms,
             detections=detections,
+            thumbnail_b64=_make_thumbnail(frame_bytes),
         )
+
+
+def _make_thumbnail(frame_bytes: bytes) -> str | None:
+    """Decode JPEG, resize to 320×240, re-encode as small JPEG for browser."""
+    try:
+        arr = np.frombuffer(frame_bytes, np.uint8)
+        frame = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        if frame is None:
+            return None
+        thumb = cv2.resize(frame, (320, 240))
+        ok, buf = cv2.imencode(".jpg", thumb, [cv2.IMWRITE_JPEG_QUALITY, 60])
+        if not ok:
+            return None
+        return base64.b64encode(buf.tobytes()).decode()
+    except Exception:
+        return None
 
     def _publish_detections(self, results: list[DetectionResult]) -> None:
         for result in results:

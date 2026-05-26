@@ -39,8 +39,16 @@ dashboard/.vite/
 .vscode/
 *.swp
 
-# Model weights cache (auto-downloaded by ultralytics)
-# ~/.cache/ultralytics/  ← user-level, not in repo
+# Model weights — auto-downloaded/exported on first run, too large for git
+*.pt
+*.onnx
+data/models/
+data/checkpoints/
+data/model_state.json
+data/redpanda/
+
+# Internal context / draft files
+PixelStreamCLAUDE.md
 
 # Logs
 *.log

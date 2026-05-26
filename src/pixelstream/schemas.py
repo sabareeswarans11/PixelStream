@@ -36,3 +36,4 @@ class DetectionResult(BaseModel):
     model: str
     latency_ms: float
     detections: list[Detection]
+    thumbnail_b64: str | None = None  # 320×240 JPEG, base64-encoded

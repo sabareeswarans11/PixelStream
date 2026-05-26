@@ -138,23 +138,47 @@ class UltralyticsBackend(InferenceBackend):
     ) -> list[Detection]:
         """
         Parse ONNX output into Detection objects.
-        YOLO output shape: [1, num_classes+4, num_anchors] (transposed format).
-        RT-DETR output: [1, num_queries, num_classes+4].
+
+        YOLO: output [1, 4+num_classes, num_anchors] — transposed format, pixel-space xywh.
+        RT-DETR: output [1, num_queries, 6] where 6 = [x1,y1,x2,y2,conf,class_id], normalized.
         """
         detections: list[Detection] = []
-        raw = outputs[0]  # shape varies by model
+        raw = outputs[0]
 
-        # Unified path: squeeze batch dim, transpose to [num_boxes, 4+classes]
         if raw.ndim == 3:
-            raw = raw[0]  # [num_classes+4, num_anchors] or [num_queries, 4+num_classes]
+            raw = raw[0]  # squeeze batch dim
 
-        # YOLO transposed: shape [4+num_classes, anchors] → transpose to [anchors, 4+num_classes]
+        names = self._get_class_names()
+
+        # RT-DETR: [num_queries, 6] — coords are already normalized xyxy, not xywh
+        if raw.shape[-1] == 6:
+            confidences = raw[:, 4]
+            keep = confidences >= conf_thresh
+            raw = raw[keep]
+            for row in raw:
+                x1, y1, x2, y2 = float(row[0]), float(row[1]), float(row[2]), float(row[3])
+                conf = float(row[4])
+                cid = int(row[5])
+                detections.append(
+                    Detection(
+                        cls=names.get(cid, str(cid)),
+                        confidence=round(conf, 4),
+                        bbox=[
+                            round(max(0.0, x1), 4),
+                            round(max(0.0, y1), 4),
+                            round(min(1.0, x2), 4),
+                            round(min(1.0, y2), 4),
+                        ],
+                    )
+                )
+            return detections
+
+        # YOLO: [4+num_classes, num_anchors] → transpose to [num_anchors, 4+num_classes]
         if raw.shape[0] < raw.shape[-1]:
             raw = raw.T
 
-        # raw is now [num_boxes, 4+num_classes]
-        boxes_xywh = raw[:, :4]
-        scores = raw[:, 4:]
+        boxes_xywh = raw[:, :4]  # cx, cy, w, h in 640px space
+        scores = raw[:, 4:]      # [num_boxes, num_classes]
         class_ids = np.argmax(scores, axis=1)
         confidences = scores[np.arange(len(scores)), class_ids]
 
@@ -163,18 +187,14 @@ class UltralyticsBackend(InferenceBackend):
         confidences = confidences[keep]
         class_ids = class_ids[keep]
 
-        # ultralytics exports class names in model metadata
-        names = self._get_class_names()
-
         for (cx, cy, w, h), conf, cid in zip(boxes_xywh, confidences, class_ids):
             x1 = (cx - w / 2) / _INPUT_SIZE[0]
             y1 = (cy - h / 2) / _INPUT_SIZE[1]
             x2 = (cx + w / 2) / _INPUT_SIZE[0]
             y2 = (cy + h / 2) / _INPUT_SIZE[1]
-            cls_name = names.get(int(cid), str(cid))
             detections.append(
                 Detection(
-                    cls=cls_name,
+                    cls=names.get(int(cid), str(cid)),
                     confidence=round(float(conf), 4),
                     bbox=[
                         round(max(0.0, x1), 4),

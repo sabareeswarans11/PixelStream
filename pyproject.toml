@@ -11,7 +11,7 @@ dependencies = [
     "pyspark>=3.5.0,<4.0",
     "delta-spark>=3.2.0",
     "confluent-kafka>=2.6.0",
-    "onnxruntime==1.18.0",  # CPU inference — last version with Intel Mac x86_64 wheels
+    "onnxruntime==1.18.0", # CPU inference — last version with Intel Mac x86_64 wheels
     "opencv-python-headless>=4.10.0",
     "numpy>=1.26.0,<2.0",
     "fastapi>=0.115.0",
@@ -25,6 +25,7 @@ dependencies = [
     "pandas>=2.2.0",
     "pyarrow>=18.0.0",
     "Pillow>=11.0.0",
+    "python-multipart>=0.0.29",
 ]
 
 [project.optional-dependencies]
